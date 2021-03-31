@@ -14,8 +14,7 @@ dataSources:
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - OwnershipTransferred
-        - TokenMapAck
+        - TokenDetail
       abis:
         - name: TokenManager
           file: ./abis/TokenManager.json
@@ -24,4 +23,48 @@ dataSources:
       eventHandlers:
         - event: TokenMapAck(indexed address,indexed address)
           handler: handleTokenMapAck
+      file: ./src/mapping.ts
+  - kind: ethereum/contract;
+    name: HRC20EthManager
+    network: mainnet
+    source:
+      address: "0x2fbbcef71544c461edfc311f42e3583d5f9675d1"
+      abi: HRC20EthManager
+      startBlock: 5336385
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - TokenDetail
+      abis:
+        - name: HRC20EthManager
+          file: ./abis/HRC20EthManager.json
+      eventHandlers:
+        - event: Burned(indexed address,indexed address,uint256,address)
+          handler: handleHrc20Burn
+        - event: Minted(address,uint256,address,bytes32)
+          handler: handleHrc20Mint
+      file: ./src/mapping.ts
+  - kind: ethereum/contract;
+    name: BUSDHmyManager
+    network: mainnet
+    source:
+      address: "0x0de8e70e94f4761dc5baf5833d0f13eb9fd93620"
+      abi: BUSDHmyManager
+      startBlock: 10759596
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - TokenDetail
+      abis:
+        - name: BUSDHmyManager
+          file: ./abis/BUSDHmyManager.json
+      eventHandlers:
+        - event: Burned(indexed address,indexed address,uint256,address)
+          handler: handleBusdBurn
+        - event: Minted(address,uint256,address,bytes32)
+          handler: handleBusdMint
       file: ./src/mapping.ts

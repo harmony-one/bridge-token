@@ -1,13 +1,8 @@
 import { TokenMapAck } from "../generated/TokenManager/TokenManager";
 import { ERC20 } from "../generated/TokenManager/ERC20";
+import { IERC20 } from "../generated/TokenManager/IERC20";
 import { TokenDetail } from "../generated/schema";
-import {
-  Address,
-  log,
-  BigInt,
-  Bytes,
-  ByteArray,
-} from "@graphprotocol/graph-ts";
+import { Address, log, BigInt } from "@graphprotocol/graph-ts";
 
 class TokenObject {
   address: Address;
@@ -24,7 +19,7 @@ function getToken(tokenAddress: Address): TokenObject {
   );
 
   let tokenInstance = ERC20.bind(tokenAddress);
-  log.warning("Token address at {}", [tokenAddress.toHex()]);
+  log.info("Token address at {}", [tokenAddress.toHex()]);
   let tokenObject = new TokenObject();
   tokenObject.address = tokenAddress;
 
@@ -32,7 +27,6 @@ function getToken(tokenAddress: Address): TokenObject {
   let network = tokenInstance.try_isMinter(HMY_BEP20_MANAGER_CONTRACT);
   let decimals = tokenInstance.try_decimals();
   let symbol = tokenInstance.try_symbol();
-  let totalLocked = tokenInstance.try_totalSupply();
 
   if (!name.reverted) {
     tokenObject.name = name.value;
@@ -46,12 +40,15 @@ function getToken(tokenAddress: Address): TokenObject {
     tokenObject.decimals = decimals.value;
   }
 
-  if (!totalLocked.reverted) {
-    tokenObject.totalLocked = totalLocked.value;
-  }
+  // if (!totalLocked.reverted) {
+  //   log.info("TOTAL_SUPPLY {} {}", ["-> ", totalLocked.value.toString()]);
+  //   tokenObject.totalLocked = totalLocked.value;
+  // }
 
   if (!network.reverted) {
-    log.warning("NETWORK VALUE", [network.value.toString()]);
+    log.info("NETWORK VALUE {}", [
+      network.value === true ? "ETHEREUM" : "BINANCE",
+    ]);
     tokenObject.network = network.value ? "ETHEREUM" : "BINANCE";
   }
 
@@ -59,23 +56,27 @@ function getToken(tokenAddress: Address): TokenObject {
 }
 
 export function handleTokenMapAck(event: TokenMapAck): void {
-  log.warning("Parsing TokensBridged for txHash {}", [
+  log.info("Parsing TokensBridged for txHash {}", [
     event.transaction.hash.toHexString(),
   ]);
-  log.warning("tokenReq", [event.params.tokenReq.toString()]);
-  log.warning("tokenAck", [event.params.tokenAck.toString()]);
+  log.info("tokenReq {}", [event.params.tokenReq.toString()]);
+  log.info("tokenAck {}", [event.params.tokenAck.toString()]);
   let tokenDetails = new TokenDetail(event.transaction.from.toHex());
   tokenDetails.hrc20Address = event.params.tokenAck;
   tokenDetails.erc20Address = event.params.tokenReq;
 
   let hrcToken = getToken(event.params.tokenAck);
+  let oneTokenInstance = IERC20.bind(event.params.tokenReq);
+  let totalLocked = oneTokenInstance.try_totalSupply();
 
-  log.warning("HRCToken {}", [hrcToken.name, hrcToken.symbol]);
+  log.info("HRCToken {}", [hrcToken.name, hrcToken.symbol]);
 
   tokenDetails.name = hrcToken.name;
   tokenDetails.symbol = hrcToken.symbol;
   tokenDetails.decimals = hrcToken.decimals;
-  tokenDetails.totalLocked = hrcToken.totalLocked;
+  tokenDetails.totalLocked = !totalLocked.reverted
+    ? totalLocked.value
+    : BigInt.fromString("0");
   tokenDetails.network = hrcToken.network;
 
   tokenDetails.save();
