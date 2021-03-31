@@ -1,6 +1,13 @@
 import { TokenMapAck } from "../generated/TokenManager/TokenManager";
+import {
+  Minted as BMinted,
+  Burned as BBurned,
+} from "../generated/BUSDHmyManager/BUSDHmyManager";
+import {
+  Minted as EMinted,
+  Burned as EBurned,
+} from "../generated/HRC20EthManager/HRC20EthManager";
 import { ERC20 } from "../generated/TokenManager/ERC20";
-import { IERC20 } from "../generated/TokenManager/IERC20";
 import { TokenDetail } from "../generated/schema";
 import { Address, log, BigInt } from "@graphprotocol/graph-ts";
 
@@ -27,6 +34,7 @@ function getToken(tokenAddress: Address): TokenObject {
   let network = tokenInstance.try_isMinter(HMY_BEP20_MANAGER_CONTRACT);
   let decimals = tokenInstance.try_decimals();
   let symbol = tokenInstance.try_symbol();
+  let totalLocked = tokenInstance.try_totalSupply();
 
   if (!name.reverted) {
     tokenObject.name = name.value;
@@ -40,10 +48,10 @@ function getToken(tokenAddress: Address): TokenObject {
     tokenObject.decimals = decimals.value;
   }
 
-  // if (!totalLocked.reverted) {
-  //   log.info("TOTAL_SUPPLY {} {}", ["-> ", totalLocked.value.toString()]);
-  //   tokenObject.totalLocked = totalLocked.value;
-  // }
+  if (!totalLocked.reverted) {
+    log.info("TOTAL_SUPPLY {} {}", ["-> ", totalLocked.value.toString()]);
+    tokenObject.totalLocked = totalLocked.value;
+  }
 
   if (!network.reverted) {
     log.info("NETWORK VALUE {}", [
@@ -56,28 +64,68 @@ function getToken(tokenAddress: Address): TokenObject {
 }
 
 export function handleTokenMapAck(event: TokenMapAck): void {
-  log.info("Parsing TokensBridged for txHash {}", [
-    event.transaction.hash.toHexString(),
-  ]);
-  log.info("tokenReq {}", [event.params.tokenReq.toString()]);
-  log.info("tokenAck {}", [event.params.tokenAck.toString()]);
-  let tokenDetails = new TokenDetail(event.transaction.from.toHex());
+  let tokenAddress = event.params.tokenAck.toHex();
+  log.info("Parsing TokenMapAck for Token {}", [tokenAddress]);
+  let tokenDetails = new TokenDetail(tokenAddress);
   tokenDetails.hrc20Address = event.params.tokenAck;
   tokenDetails.erc20Address = event.params.tokenReq;
 
   let hrcToken = getToken(event.params.tokenAck);
-  let oneTokenInstance = IERC20.bind(event.params.tokenReq);
-  let totalLocked = oneTokenInstance.try_totalSupply();
-
-  log.info("HRCToken {}", [hrcToken.name, hrcToken.symbol]);
+  log.info("HRCToken {} {}", [hrcToken.name, hrcToken.symbol]);
 
   tokenDetails.name = hrcToken.name;
   tokenDetails.symbol = hrcToken.symbol;
   tokenDetails.decimals = hrcToken.decimals;
-  tokenDetails.totalLocked = !totalLocked.reverted
-    ? totalLocked.value
-    : BigInt.fromString("0");
+  tokenDetails.totalLocked = hrcToken.totalLocked;
   tokenDetails.network = hrcToken.network;
 
   tokenDetails.save();
+}
+
+export function handleBusdBurn(event: BBurned): void {
+  let tokenAddress = event.params.token.toHex();
+  log.info("Parsing Binance Burned for TOKEN {}", [tokenAddress]);
+  let tokenDetail = TokenDetail.load(tokenAddress);
+  if (!tokenDetail) {
+    tokenDetail = new TokenDetail(tokenAddress);
+  }
+  let amount = event.params.amount;
+  tokenDetail.totalLocked = tokenDetail.totalLocked.minus(amount);
+  tokenDetail.save();
+}
+
+export function handleBusdMint(event: BMinted): void {
+  let tokenAddress = event.params.oneToken.toString();
+  log.info("Parsing Binance Minted for TOKEN {}", [tokenAddress]);
+  let tokenDetail = TokenDetail.load(tokenAddress);
+  if (!tokenDetail) {
+    tokenDetail = new TokenDetail(tokenAddress);
+  }
+  let amount = event.params.amount;
+  tokenDetail.totalLocked = tokenDetail.totalLocked.plus(amount);
+  tokenDetail.save();
+}
+
+export function handleHrc20Mint(event: EMinted): void {
+  let tokenAddress = event.params.ethToken.toHex();
+  log.info("Parsing Ethereum Minted for TOKEN {}", [tokenAddress]);
+  let tokenDetail = TokenDetail.load(tokenAddress);
+  if (!tokenDetail) {
+    tokenDetail = new TokenDetail(tokenAddress);
+  }
+  let amount = event.params.amount;
+  tokenDetail.totalLocked = tokenDetail.totalLocked.plus(amount);
+  tokenDetail.save();
+}
+
+export function handleHrc20Burn(event: EBurned): void {
+  let tokenAddress = event.params.token.toHex();
+  log.info("Parsing Ethreum Burned for TOKEN {}", [tokenAddress]);
+  let tokenDetail = TokenDetail.load(tokenAddress);
+  if (!tokenDetail) {
+    tokenDetail = new TokenDetail(tokenAddress);
+  }
+  let amount = event.params.amount;
+  tokenDetail.totalLocked = tokenDetail.totalLocked.minus(amount);
+  tokenDetail.save();
 }
