@@ -1,0 +1,27 @@
+specVersion: 0.0.2
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: TokenManager
+    network: mainnet
+    source:
+      address: "0xbadb6897cf2e35aca73b6f37361a35eeb6f71637"
+      abi: TokenManager
+      startBlock: 5336387
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - OwnershipTransferred
+        - TokenMapAck
+      abis:
+        - name: TokenManager
+          file: ./abis/TokenManager.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: TokenMapAck(indexed address,indexed address)
+          handler: handleTokenMapAck
+      file: ./src/mapping.ts

@@ -1,0 +1,38 @@
+enum NetworkType {
+  ETHEREUM
+  BINANCE
+}
+
+enum TokenType {
+  BUSD
+  LINK
+  ERC20
+  HRC20
+  ETH
+  ONE
+  ERC721
+}
+
+type TokenDetail @entity {
+  id: ID!
+  name: String!
+  symbol: String!
+  decimals: Int!
+  totalLocked: BigInt!
+  network: NetworkType
+  erc20Address: Bytes!
+  hrc20Address: Bytes!
+  # token: TokenType!
+}
+
+type Token @entity {
+  id: ID!
+  erc20Address: Bytes!
+  erc20Name: String!
+  erc20ChainId: Int!
+  decimals: Int!
+  symbol: String!
+  hrc20Address: Bytes!
+  hrc20Name: String!
+  hrc20ChainId: String!
+}
