@@ -18,8 +18,8 @@ dataSources:
       abis:
         - name: TokenManager
           file: ./abis/TokenManager.json
-        - name: ERC20
-          file: ./abis/ERC20.json
+        - name: BridgedToken
+          file: ./abis/BridgedToken.json
       eventHandlers:
         - event: TokenMapAck(indexed address,indexed address)
           handler: handleTokenMapAck

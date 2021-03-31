@@ -98,9 +98,9 @@ export class Transfer__Params {
   }
 }
 
-export class ERC20 extends ethereum.SmartContract {
-  static bind(address: Address): ERC20 {
-    return new ERC20("ERC20", address);
+export class BridgedToken extends ethereum.SmartContract {
+  static bind(address: Address): BridgedToken {
+    return new BridgedToken("BridgedToken", address);
   }
 
   allowance(owner: Address, spender: Address): BigInt {
