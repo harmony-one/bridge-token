@@ -40,6 +40,8 @@ dataSources:
       abis:
         - name: HRC20EthManager
           file: ./abis/HRC20EthManager.json
+        - name: BridgedToken
+          file: ./abis/BridgedToken.json
       eventHandlers:
         - event: Burned(indexed address,indexed address,uint256,address)
           handler: handleHrc20Burn
@@ -62,6 +64,8 @@ dataSources:
       abis:
         - name: BUSDHmyManager
           file: ./abis/BUSDHmyManager.json
+        - name: BridgedToken
+          file: ./abis/BridgedToken.json
       eventHandlers:
         - event: Burned(indexed address,indexed address,uint256,address)
           handler: handleBusdBurn
