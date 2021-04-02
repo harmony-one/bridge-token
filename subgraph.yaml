@@ -8,7 +8,7 @@ dataSources:
     source:
       address: "0xbadb6897cf2e35aca73b6f37361a35eeb6f71637"
       abi: TokenManager
-      startBlock: 5336387
+      startBlock: 10750596
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -30,7 +30,7 @@ dataSources:
     source:
       address: "0x2fbbcef71544c461edfc311f42e3583d5f9675d1"
       abi: HRC20EthManager
-      startBlock: 5336385
+      startBlock: 10750596
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -71,4 +71,26 @@ dataSources:
           handler: handleBusdBurn
         - event: Minted(address,uint256,address,bytes32)
           handler: handleBusdMint
+      file: ./src/mapping.ts
+  - kind: ethereum/contract
+    name: TokenManagerBSC
+    network: mainnet
+    source:
+      address: "0x7678a9532bfc62e1f65f819b72ade0a395deaabf"
+      abi: TokenManager
+      startBlock: 10759612
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - TokenDetail
+      abis:
+        - name: TokenManager
+          file: ./abis/TokenManager.json
+        - name: BridgedToken
+          file: ./abis/BridgedToken.json
+      eventHandlers:
+        - event: TokenMapAck(indexed address,indexed address)
+          handler: handleTokenMapAck
       file: ./src/mapping.ts
